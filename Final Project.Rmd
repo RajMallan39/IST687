@@ -1,0 +1,450 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+
+#Final Project
+
+# Question - Can type of Sport be predicted based on a set of variables?
+
+```{r}
+require(randomForest)
+require(tidyverse)
+require(reshape2)
+require(scales)
+require(ggplot2)
+require(moments)
+```
+
+```{r}
+# Loading dataset
+setwd("/Users/rajindersingh/Documents")
+```
+
+```{r}
+olympics <- read.csv("athlete_events.csv")
+```
+```{r}
+str(olympics)
+summary(olympics)
+head(olympics)
+```
+
+# Omit 'NA'
+```{r}
+any(is.na(olympics))
+olympics <- na.omit(olympics)
+any(is.na(olympics))
+str(olympics)
+summary(olympics)
+head(olympics)
+```
+
+# Table of categoty proportions for Sex
+```{r}
+prop.table(table(olympics$Sex))
+```
+
+# Number of unique Sport 
+```{r}
+unique(olympics$Sport)
+```
+# Comparing Men & Women dataset for Age, Height & Weight
+```{r}
+boxplot(Age~Sex, data=olympics, col=(c("gold","darkgreen")), 
+        main = "Age of Men & Women", xlab="Sex",ylab="Age")
+
+
+boxplot(Height~Sex, data=olympics, col=(c("gold","darkgreen")), 
+        main = "Height of Men & Women", xlab="Sex",ylab="Height")
+
+
+boxplot(Weight~Sex, data=olympics, col=(c("gold","darkgreen")), 
+        main = "Weight of Male & Female", xlab="Sex",ylab="Weight")
+```
+# The mean of Men’s and Women’s age is almost similar, but the mean for
+# Men's height and weight is higher than women.
+
+
+# Men Athlete_Events - randomForest analysis
+```{r}
+results <- olympics
+str(results)
+
+length(which(results$Sex == "M"))
+
+results.men <- results[results$Sex == "M", ]
+str(results.men)
+
+results.men$Sport <- as.factor(results.men$Sport)
+str(results.men)
+```
+```{r}
+results.men.rf <- randomForest(results.men[, -13], results.men[, 13])
+results.men.rf
+
+importance(results.men.rf)
+```
+
+# Remove Event variable since similar to Sport variable
+```{r}
+results1.men <- results.men[, -14]
+str(results1.men)
+```
+
+# Athlete_Events - randomForest analysis (Event variable removed)
+```{r}
+results1.men.rf <- randomForest(results1.men[, -13], results1.men[, 13])
+results1.men.rf
+
+importance(results1.men.rf)
+```
+
+# Men - histogram with normal curve of age
+```{r}
+h<-hist(results1.men$Age, breaks=20, col="red", xlab="Age", 
+        main="Histogram with Normal Curve of Men's Age") 
+xfit<-seq(min(results1.men$Age),max(results1.men$Age),length=40) 
+yfit<-dnorm(xfit,mean=mean(results1.men$Age),sd=sd(results1.men$Age)) 
+yfit <- yfit*diff(h$mids[1:2])*length(results1.men$Age) 
+lines(xfit, yfit, col="blue", lwd=2)
+```
+# Men - mean and standard deviation of age
+```{r}
+Ave <- mean(results1.men$Age)
+SD <- sd(results1.men$Age)
+c(Average = Ave, SD = SD)
+```
+# Men - normal distribution histogram of age
+```{r}
+y <-  rnorm(results1.men$Age)
+hist(y,main = 'Age Normal Distribution', col = "light green")
+```
+# calculate standard units
+```{r}
+z <- scale(results1.men$Age)
+
+# calculate proportion of values within 2 SD of mean
+mean(abs(z) < 2)
+```
+
+# Men - histogram with normal curve of height
+```{r}
+h<-hist(results1.men$Height, breaks=20, col="red", xlab="Height", 
+        main="Histogram with Normal Curve of Men's Height") 
+xfit<-seq(min(results1.men$Height),max(results1.men$Height),length=40) 
+yfit<-dnorm(xfit,mean=mean(results1.men$Height),sd=sd(results1.men$Height)) 
+yfit <- yfit*diff(h$mids[1:2])*length(results1.men$Height) 
+lines(xfit, yfit, col="blue", lwd=2)
+```
+# Men - mean and standard deviation of height
+```{r}
+Ave <- mean(results1.men$Height)
+SD <- sd(results1.men$Height)
+c(Average = Ave, SD = SD)
+```
+# Men - normal distribution histogram of height
+```{r}
+y <-  rnorm(results1.men$Height)
+hist(y,main = 'Height Normal Distribution', col = "light green")
+```
+# calculate standard units
+```{r}
+z <- scale(results1.men$Height)
+
+# calculate proportion of values within 2 SD of mean
+mean(abs(z) < 2)
+```
+
+# Men - histogram with normal curve of weight
+```{r}
+h<-hist(results1.men$Weight, breaks=30, col="red", xlab="Weight", 
+        main="Histogram with Normal Curve of Men's Weight") 
+xfit<-seq(min(results1.men$Weight),max(results1.men$Weight),length=40) 
+yfit<-dnorm(xfit,mean=mean(results1.men$Weight),sd=sd(results1.men$Weight)) 
+yfit <- yfit*diff(h$mids[1:2])*length(results1.men$Weight) 
+lines(xfit, yfit, col="blue", lwd=2)
+```
+# Men - mean and standard deviation of weight
+```{r}
+Ave <- mean(results1.men$Weight)
+SD <- sd(results1.men$Weight)
+c(Average = Ave, SD = SD)
+```
+# Men - normal distribution histogram of weight
+```{r}
+y <-  rnorm(results1.men$Weight)
+hist(y,main = 'Weight Normal Distribution', col = "light green")
+```
+# calculate standard units
+```{r}
+z <- scale(results1.men$Weight)
+
+# calculate proportion of values within 2 SD of mean
+
+mean(abs(z) < 2)
+```
+
+# Remove ID, Name, Sex, Team, NOC, Games, Year, Season, City, Medal columns
+```{r}
+results2.men <- results1.men[, c(-1:-3, -7:-12, -14)]
+str(results2.men)
+```
+
+# Athlete_Events - randomForest analysis with Age, Height, Weight,and Team
+```{r}
+results2.men.rf <- randomForest(results2.men[, -4], results2.men[, 4])
+options(max.print=999999)
+results2.men.rf
+
+importance(results2.men.rf)
+```
+
+# randomForest analysis for the following Sport
+# (Gymnastics, Athletics, Swimming, Weightlifting, and Equestrianism)
+# based on Men's Age, Height, Weight, and Team
+```{r}  
+length(which(olympics$Sport == "Gymnastics"))
+olympics.gymnastics <- olympics[olympics$Sport == "Gymnastics", ]
+str(olympics.gymnastics)
+
+length(which(olympics$Sport == "Athletics"))
+olympics.athletics <- olympics[olympics$Sport == "Athletics", ]
+str(olympics.athletics)
+
+length(which(olympics$Sport == "Swimming"))
+olympics.swimming <- olympics[olympics$Sport == "Swimming", ]
+str(olympics.swimming)
+
+length(which(olympics$Sport == "Weightlifting"))
+olympics.weightlifting <- olympics[olympics$Sport == "Weightlifting", ]
+str(olympics.weightlifting)
+
+length(which(olympics$Sport == "Equestrianism"))
+olympics.equestrian <- olympics[olympics$Sport == "Equestrianism", ]
+str(olympics.equestrian)
+
+olympics.combine <- rbind(olympics.gymnastics, olympics.swimming, olympics.weightlifting, 
+                          olympics.athletics, olympics.equestrian)
+str(olympics.combine)
+```
+```{r}
+olympics.combine1 <- olympics.combine[, c(-1:-3, -7:-12, -14, -15)]
+str(olympics.combine1)
+```
+```{r}
+olympics.combine1$Sport <- as.factor(olympics.combine1$Sport)
+str(olympics.combine1)
+```
+```{r}
+olympics.combine1.rf <- randomForest(olympics.combine1[,-4], olympics.combine1[,4])
+olympics.combine1.rf
+
+importance(olympics.combine1.rf)
+```
+
+# Predicting Sport based on randomForest analysis
+# Row 1000 & 4000
+```{r}
+olympics.combine1[1000,]
+olympics.combine1[4000,]
+```
+
+#Predicting Row 1000 & 4000
+```{r}
+predict(olympics.combine1.rf, olympics.combine1[1000,-5])
+predict(olympics.combine1.rf, olympics.combine1[4000,-5])
+```
+
+# Perdicting for Age = 30, Height = 170, Weight = 50
+```{r}
+predict(olympics.combine1.rf, c(30, 170, 50))
+```
+
+# Heatmap with relative change equally across all variables
+# Rescale Age, Height and Weight 0 to 100
+```{r}
+str(olympics.combine1)
+olympics.combine1$Age <- rescale(olympics.combine1$Age, to = c(0, 100))
+olympics.combine1$Height <- rescale(olympics.combine1$Height, to = c(0, 100))
+olympics.combine1$Weight <- rescale(olympics.combine1$Weight, to = c(0, 100))
+str(olympics.combine1)
+```
+
+# Melt Age, Weight, Height against Sport
+```{r}
+melt <- reshape::melt(olympics.combine1, id=c("Sport"))
+str(melt)
+
+gplot <- ggplot(melt, aes(x = Sport, y = variable,
+                             group = variable, fill = value))
+gplot <- gplot + geom_tile()
+gplot <- gplot + scale_fill_gradient(low = 'blue', high = 'red')
+gplot <- gplot + ggtitle("Heatmap of Men's Age, Height Weight and Sport",
+                         subtitle = "Relative change equally across Age, Height, and Weight")
+gplot <- gplot + labs(x = "Sport", y='Variables') 
+gplot
+```
+
+# Scatter plot Men's Age, Height, Weight, 
+# and Sport (Athletics, Equestrianism, Gymnastics, Swimming, & Weightlifting)
+```{r}
+str(olympics.combine)
+```
+```{r}
+olympics.combine2 <- olympics.combine[, c(-1:-3, -7:-12, -14, -15)]
+str(olympics.combine2)
+```
+
+```{r}
+gplot <- ggplot(olympics.combine2, aes(x=Height, y=Weight))
+gplot <- gplot + geom_point(aes(size=Age, color=as.factor(Sport)))
+gplot <- gplot + stat_smooth(method = "lm",  aes(x=Height, y=Weight))
+gplot <- gplot + labs(x = 'Height', y = 'Weight', size = 'Age',
+                      color = "Sport") 
+gplot <- gplot + ggtitle("Scatter plot of Men's Height, Weight, Age & Sport")
+gplot
+```
+
+# randomForest analysis for the following Sport
+# (Equestrianism, Gymnastics, Swimming, and Weightlifting)
+# based on Men's Age, Height, Weight, and Team
+```{r}
+olympics.combine3 <- rbind(olympics.gymnastics, olympics.swimming, olympics.weightlifting, olympics.equestrian)
+str(olympics.combine3)
+```
+```{r}
+olympics.combine4 <- olympics.combine3[, c(-1:-3, -7:-12, -14, -15)]
+str(olympics.combine4)
+```
+```{r}
+olympics.combine4$Sport <- as.factor(olympics.combine4$Sport)
+str(olympics.combine4)
+```
+```{r}
+olympics.combine4.rf <- randomForest(olympics.combine4[,-4], olympics.combine4[,4])
+olympics.combine4.rf
+
+importance(olympics.combine4.rf)
+```
+
+# Scatter plot Men's Age, Height, Weight, 
+# and Sport (Equestrianism, Gymnastics, Swimming, & Weightlifting)
+```{r}
+str(olympics.combine4)
+```
+```{r}
+gplot <- ggplot(olympics.combine4, aes(x=Height, y=Weight))
+gplot <- gplot + geom_point(aes(size=Age, color=as.factor(Sport)))
+gplot <- gplot + stat_smooth(method = "lm",  aes(x=Height, y=Weight))
+gplot <- gplot + labs(x = 'Height', y = 'Weight', size = 'Age',
+                      color = "Sport") 
+gplot <- gplot + ggtitle("Scatter plot of Men's Height, Weight, Age & Sport")
+gplot
+```
+
+# Create train and test data sets
+# based on train dataset for the following Sport
+# (Equestrianism, Gymnastics, Swimming, and Weightlifting)
+# based on Men's Age, Height, Weight, and Team
+```{r}
+str(olympics.combine4)
+```
+```{r}
+split.olympics.combine4 <- sample(nrow(olympics.combine4), nrow(olympics.combine4) * .67)
+olympics.combine4.Train <- olympics.combine4[split.olympics.combine4, ]
+olympics.combine4.Test <- olympics.combine4[-split.olympics.combine4, ]
+str(olympics.combine4.Train)
+str(olympics.combine4.Test)
+```
+
+# randomForest analysis based on train dataset for the following Sport
+# (Equestrianism, Gymnastics, Swimming, and Weightlifting)
+# based on Men's Age, Height, Weight, and Team
+```{r}
+olympics.combine4.Train$Sport <- as.factor(olympics.combine4.Train$Sport)
+str(olympics.combine4.Train)
+```
+```{r}
+olympics.combine4.Test$Sport <- as.factor(olympics.combine4.Test$Sport)
+str(olympics.combine4.Test)
+```
+```{r}
+olympics.combine4.Train.rf <- randomForest(olympics.combine4.Train[,-4], olympics.combine4.Train[,4])
+olympics.combine4.Train.rf
+
+importance(olympics.combine4.Train.rf)
+```
+
+# Predicting Sport based on randomForest analysis
+
+# Row 500 & 1300
+```{r}
+olympics.combine4.Test[500,]
+olympics.combine4.Test[1300,]
+```
+
+#Predicting Row 5000 & 1300
+```{r}
+predict(olympics.combine4.Train.rf, olympics.combine4.Test[500,-4])
+predict(olympics.combine4.Train.rf, olympics.combine4.Test[1300,-4])
+```
+
+# Perdicting for Age = 30, Height = 170, Weight = 50
+```{r}
+predict(olympics.combine4.Train.rf, c(30, 170, 50))
+```
+
+# Plot on random Forest model
+```{r}
+plot(olympics.combine4.Train.rf)
+```
+
+# lm() regression models
+```{r}
+str(olympics.combine4)
+olympics.combine4$Sport <- as.factor(olympics.combine4$Sport)
+str(olympics.combine4)
+```
+```{r}
+olympics.combine4$Sport1 <- c(0:0)
+str(olympics.combine4)
+```
+```{r}
+df.sport <- c('Equestrianism', 'Gymnastics', 'Swimming', 'Weightlifting')
+str(df.sport)
+```
+```{r}
+olympics.combine4$Sport1 <- match(olympics.combine4$Sport, df.sport, nomatch = 0)
+```
+```{r}
+knitr::kable(head(olympics.combine4[which(olympics.combine4$Sport == "Equestrianism"),]))
+
+knitr::kable(head(olympics.combine4[which(olympics.combine4$Sport == "Gymnastics"),]))
+
+knitr::kable(head(olympics.combine4[which(olympics.combine4$Sport == "Swimming"),]))
+
+knitr::kable(head(olympics.combine4[which(olympics.combine4$Sport == "Weightlifting"),]))
+```
+```{r}
+predict.sport.age <- lm(Sport1 ~ Age, olympics.combine4)
+summary(predict.sport.age)
+```
+```{r}
+predict.sport.height <- lm(Sport1 ~ Height, olympics.combine4)
+summary(predict.sport.height)
+```
+```{r}
+predict.sport.weight <- lm(Sport1 ~ Weight, olympics.combine4)
+summary(predict.sport.weight)
+```
+```{r}
+predict.sport.height.weight <- lm(Sport1 ~ Height + Weight, olympics.combine4)
+summary(predict.sport.height.weight)
+```
+```{r}
+predict.sport <- lm(Sport1 ~ Age + Height + Weight, olympics.combine4)
+summary(predict.sport)
+```
+
